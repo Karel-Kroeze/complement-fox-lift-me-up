@@ -5,8 +5,8 @@
     import { createNoise3D } from "simplex-noise";
     import Color from "color";
 
-    const base_url = "fox.home.karel-kroeze.nl";
-    const super_secret_key = "aduGwVzZ2i93DWxaPqbEi6QcRdzZdD3s5djC3CnGmo8p"; // capped at a low cost, but TODO: use a secure gatekeeper
+    const protocol = document.location.protocol;
+    const base_url = `${protocol}//fox.home.karel-kroeze.nl`;
 
     let text: string;
     let canvas: HTMLCanvasElement;
