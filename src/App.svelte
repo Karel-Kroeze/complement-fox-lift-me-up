@@ -5,7 +5,7 @@
     import { createNoise3D } from "simplex-noise";
     import Color from "color";
 
-    const base_url = "http://fox.home.karel-kroeze.nl";
+    const base_url = "fox.home.karel-kroeze.nl";
     const super_secret_key = "aduGwVzZ2i93DWxaPqbEi6QcRdzZdD3s5djC3CnGmo8p"; // capped at a low cost, but TODO: use a secure gatekeeper
 
     let text: string;
@@ -26,6 +26,7 @@
     // get and massage list of voices
     const getVoices = async () => {
         const url = new URL("voices", base_url);
+        console.log({ url });
         const _voices = await fetch(url).then((res) => {
             if (!res.ok) {
                 console.error("failed fetching voices:", {
