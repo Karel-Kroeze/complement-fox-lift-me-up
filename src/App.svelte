@@ -4,7 +4,6 @@
     import { voice, type IVoice } from "./voice";
     import { createNoise3D } from "simplex-noise";
     import Color from "color";
-    import loading_messages from "./assets/loading_messages";
 
     const base_url = "http://fox.home.karel-kroeze.nl";
     const super_secret_key = "aduGwVzZ2i93DWxaPqbEi6QcRdzZdD3s5djC3CnGmo8p"; // capped at a low cost, but TODO: use a secure gatekeeper
@@ -117,18 +116,40 @@
         }
 
         loading = true;
-        const url = new URL("complement", base_url);
-        url.searchParams.set("q", text);
-        url.searchParams.set("key", super_secret_key);
-        url.searchParams.set("voice", $voice.name);
-
-        const raw_audio = await fetch(url).then((response) => {
-            if (!response.ok) {
-                const { status, statusText: label } = response;
-                console.log("error fetching complement", { status, label });
-            }
-            return response.arrayBuffer();
-        });
+        loading_message = "thinking about what you said...";
+        const url = new URL("uplift/generate", base_url);
+        const raw_audio = await fetch(url, {
+            method: "POST",
+            body: JSON.stringify({ input: text }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then(async (response) => {
+                const { message } = await response.json();
+                return message;
+            })
+            .catch((err) => {
+                console.error("error generating response", { err, text });
+                return "sorry, I can't think of a good response to that.";
+            })
+            .then((message) => {
+                loading_message = "coming up with a good reply...";
+                return fetch(new URL("uplift/synthesize", base_url), {
+                    method: "POST",
+                    body: JSON.stringify({ message, voice: $voice.name }),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+            })
+            .then((response) => {
+                console.log({ voice });
+                return response.arrayBuffer();
+            })
+            .catch((err) => {
+                console.error("error synthesizing audio", { err });
+            });
         loading = false;
 
         if (!raw_audio) {
@@ -216,11 +237,6 @@
         initVisualization();
         updateVisualization();
         getVoices();
-
-        // continuous update loading message, even when not needed...
-        setInterval(() => {
-            loading_message = random(loading_messages);
-        }, 800);
     });
 </script>
 
@@ -240,7 +256,7 @@
                     bind:value={text}
                     disabled={loading ? true : null}
                 />
-                <label
+                <!-- <label
                     for="voice"
                     style="margin-top: 1em; display: inline-block;"
                 >
@@ -274,7 +290,7 @@
                             {/each}
                         {/if}
                     </select>
-                </div>
+                </div> -->
                 <button type="submit" disabled={loading ? true : null}>
                     {#if loading}
                         {loading_message}
@@ -290,7 +306,7 @@
         <section class="widget history">
             <form action="" on:submit={replayComplement}>
                 <div class="field">
-                    <label for="history">Or play a previous message</label>
+                    <label for="history">Or replay a previous message</label>
                     <select
                         name="history"
                         id="history"
